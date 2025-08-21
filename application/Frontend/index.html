@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Authentication App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 2rem;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: #f5f5f5;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 1rem;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .profile-section {
+            display: none;
+            text-align: center;
+        }
+
+        .profile-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .profile-info h3 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .profile-field {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .profile-field:last-child {
+            border-bottom: none;
+        }
+
+        .profile-field strong {
+            color: #555;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            margin-top: 1rem;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Authentication Forms -->
+        <div id="authContainer">
+            <div class="header">
+                <h1>Welcome</h1>
+                <p>Sign in to your account or create a new one</p>
+            </div>
+
+            <div class="tab-buttons">
+                <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+                <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="form-section active">
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="loginUsername">Username or Email</label>
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn" id="loginBtn">
+                        Login
+                    </button>
+                </form>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="form-section">
+                <form onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label for="signupFullName">Full Name *</label>
+                        <input type="text" id="signupFullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupUsername">Username *</label>
+                        <input type="text" id="signupUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email *</label>
+                        <input type="email" id="signupEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPhone">Phone Number</label>
+                        <input type="tel" id="signupPhone">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">Password *</label>
+                        <input type="password" id="signupPassword" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password *</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn" id="signupBtn">
+                        Create Account
+                    </button>
+                </form>
+            </div>
+
+            <div id="message"></div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profileSection" class="profile-section">
+            <div class="header">
+                <h1>User Profile</h1>
+                <p>Welcome back!</p>
+            </div>
+            <div class="profile-info" id="profileInfo">
+                <!-- Profile information will be loaded here -->
+            </div>
+            <button class="btn logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // const API_BASE = '/';
+        // const API_BASE = '/api';
+        const API_BASE ="/api";
+        let authToken = localStorage.getItem('authToken');
+
+        // Check if user is already logged in
+        if (authToken) {
+            showProfile();
+        }
+
+        function switchTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            
+            // Reset active states
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            loginForm.classList.remove('active');
+            signupForm.classList.remove('active');
+            
+            // Set new active state
+            if (tab === 'login') {
+                loginForm.classList.add('active');
+                tabButtons[0].classList.add('active');
+            } else {
+                signupForm.classList.add('active');
+                tabButtons[1].classList.add('active');
+            }
+            
+            clearMessage();
+        }
+
+        function showMessage(text, type = 'info') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = text;
+            messageDiv.className = `message ${type}`;
+        }
+
+        function clearMessage() {
+            document.getElementById('message').innerHTML = '';
+        }
+
+        function setLoading(btnId, loading) {
+            const btn = document.getElementById(btnId);
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading"></span>Processing...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btnId === 'loginBtn' ? 'Login' : 'Create Account';
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            setLoading('loginBtn', true);
+            clearMessage();
+            
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    showMessage('Login successful!', 'success');
+                    setTimeout(() => {
+                        showProfile();
+                    }, 1000);
+                } else {
+                    showMessage(data.message || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please check if the server is running.', 'error');
+                console.error('Login error:', error);
+            }
+            
+            setLoading('loginBtn', false);
+        }
+
+        async function handleSignup(event) {
+            event.preventDefault();
+            
+            const fullName = document.getElementById('signupFullName').value;
+            const username = document.getElementById('signupUsername').value;
+            const email = document.getElementById('signupEmail').value;
+            const phone = document.getElementById('signupPhone').value;
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showMessage('Passwords do not match!', 'error');
+                return;
+            }
+            
+            setLoading('signupBtn', true);
+            clearMessage();
+            
+            try {
+                const response = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fullName,
+                        username,
+                        email,
+                        phone,
+                        password
+                    }),
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage('Account created successfully! Please login.', 'success');
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('loginUsername').value = username;
+                    }, 2000);
+                } else {
+                    showMessage(data.message || 'Registration failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Network error. Please check if the server is running.', 'error');
+                console.error('Signup error:', error);
+            }
+            
+            setLoading('signupBtn', false);
+        }
+
+        async function showProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                    },
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('authContainer').style.display = 'none';
+                    document.getElementById('profileSection').style.display = 'block';
+                    
+                    const profileInfo = document.getElementById('profileInfo');
+                    const user = data.user;
+                    const joinDate = new Date(user.createdAt).toLocaleDateString();
+                    
+                    profileInfo.innerHTML = `
+                       <h3>Profile Information</h3>
+                        <div class="profile-field">
+                            <strong>Full Name:</strong>
+                            <span>${user.fullName}</span>
+                        </div>
+                        <div class="profile-field">
+                            <strong>Username:</strong>
+                            <span>${user.username}</span>
+                        </div>
+                        <div class="profile-field">
+                            <strong>Email:</strong>
+                            <span>${user.email}</span>
+                        </div>
+                        <div class="profile-field">
+                            <strong>Phone:</strong>
+                            <span>${user.phone || 'Not provided'}</span>
+                        </div>
+                        <div class="profile-field">
+                            <strong>Member Since:</strong>
+                            <span>${joinDate}</span>
+                        </div>
+                    `;
+                } else {
+                    logout();
+                }
+            } catch (error) {
+                console.error('Profile fetch error:', error);
+                logout();
+            }
+        }
+
+        function logout() {
+            authToken = null;
+            localStorage.removeItem('authToken');
+            document.getElementById('authContainer').style.display = 'block';
+            document.getElementById('profileSection').style.display = 'none';
+            
+            // Clear forms
+            document.querySelectorAll('input').forEach(input => input.value = '');
+            clearMessage();
+            switchTab('login');
+        }
+
+        // Test server connection on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                console.log('Server status:', data.status);
+            } catch (error) {
+                console.log('Server appears to be offline. Please start the backend server.');
+            }
+        });
+    </script>
+</body>
+</html>
